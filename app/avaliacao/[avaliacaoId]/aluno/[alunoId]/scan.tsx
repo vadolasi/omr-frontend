@@ -1,9 +1,9 @@
 import { router, useLocalSearchParams } from "expo-router"
-import { View } from "react-native"
-import { IconButton, Text } from "react-native-paper"
+import { View , Text } from "react-native"
 import { Camera, CameraType } from "expo-camera"
 import useCamera from "../../../../../lib/useCamera"
 import { useRef, useState } from "react"
+import { TouchableOpacity } from "react-native-gesture-handler"
 
 interface Question {
   response: string
@@ -13,7 +13,7 @@ interface Question {
 export default function () {
   const { avaliacaoId, alunoId } = useLocalSearchParams<{ avaliacaoId: string, alunoId: string }>()
 
-  const { permission, handleRatio, ratioString, fullScreenHeight, fullScreenWidth } = useCamera()
+  const { permission, handleRatio, ratioString } = useCamera()
 
   const cameraRef = useRef<Camera>(null)
   const [loading, setLoading] = useState(false)
@@ -53,34 +53,26 @@ export default function () {
   }
 
   return (
-    <View className="h-screen flex-1 justify-center items-center">
-      <Camera
-        type={CameraType.back}
-        ref={cameraRef}
-        ratio={ratioString}
-        onCameraReady={() => {
-          handleRatio(cameraRef.current!)
-        }}
-        style={{
-          height: fullScreenHeight,
-          width: fullScreenWidth
-        }}
-      />
-      <View className="absolute bottom-5 w-full flex flex-row justify-center items-center">
-        <View style={{ width: 60 }} />
-        <IconButton
-          icon="camera"
-          size={60}
-          mode="contained-tonal"
-          onPress={takePicture}
-        />
-        <IconButton
-          icon="close"
-          size={30}
-          mode="contained-tonal"
-          onPress={router.back}
+    <View style={{ height: "100%", width: "100%", padding: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <View style={{ alignItems: "center", marginTop: 75 }}>
+        <Text style={{ marginBottom: 20, textAlign: "center", fontSize: 20 }}>Centralize as marcações, tente evitar que o celular esteja muito inclinado em relação a folha</Text>
+        <Camera
+          type={CameraType.back}
+          ref={cameraRef}
+          ratio={ratioString}
+          onCameraReady={() => {
+            handleRatio(cameraRef.current!)
+            cameraRef.current!.getSupportedRatiosAsync().then(console.log)
+          }}
+          style={{
+            height: 400,
+            width: 300
+          }}
         />
       </View>
+      <TouchableOpacity onPress={console.log} style={{ padding: 16, backgroundColor: "#063CB4E5", borderRadius: 10, width: "100%", marginTop: 10 }} disabled={loading}>
+        <Text style={{ fontWeight: "bold", color: "white", width: "100%" }}>{loading ? "Carregando..." : "Corrigir"}</Text>
+      </TouchableOpacity>
     </View>
   )
 }
