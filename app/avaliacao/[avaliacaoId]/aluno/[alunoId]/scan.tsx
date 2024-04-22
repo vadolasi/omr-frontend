@@ -1,9 +1,10 @@
 import { router, useLocalSearchParams } from "expo-router"
-import { View , Text } from "react-native"
+import { ActivityIndicator, View, Text } from "react-native"
 import { Camera, CameraType } from "expo-camera"
 import useCamera from "../../../../../lib/useCamera"
 import { useRef, useState } from "react"
 import { TouchableOpacity } from "react-native-gesture-handler"
+import Toast from "react-native-root-toast"
 
 interface Question {
   response: string
@@ -13,7 +14,7 @@ interface Question {
 export default function () {
   const { avaliacaoId, alunoId } = useLocalSearchParams<{ avaliacaoId: string, alunoId: string }>()
 
-  const { permission, handleRatio, ratioString } = useCamera()
+  const { permission, ratioString } = useCamera()
 
   const cameraRef = useRef<Camera>(null)
   const [loading, setLoading] = useState(false)
@@ -38,41 +39,61 @@ export default function () {
     // @ts-ignore
     formData.append("file", { uri: photo.uri, name: filename, type })
 
-    const res = await fetch("https://daa6-187-111-237-246.ngrok-free.app/", {
-      method: "POST",
-      headers: {
-        "Content-Type": "multipart/form-data",
-        "Accept": "application/json"
-      },
-      body: formData
-    })
+    let res: Response
 
-    const questions: Record<string, Question> = await res.json()
+    try {
+      res = await fetch("https://59c5-187-61-151-28.ngrok-free.app/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "multipart/form-data",
+          "Accept": "application/json"
+        },
+        body: formData
+      })
+    } catch (e) {
+      Toast.show("Ocorreu um erro. O incidente foi reportado. Verifique se a imagem está legível e tente novamente.")
+      setLoading(false)
+      return
+    }
+
+    const data = await res.json()
+
+    if (!res.ok || data.status === "error") {
+      Toast.show("Não foi possível processar a imagem. Tente novamente.")
+      setLoading(false)
+      return
+    }
+
+    const questions: Record<string, Question> = data
 
     router.push({ pathname: "/avaliacao/[avaliacaoId]/aluno/[alunoId]/", params: { avaliacaoId, alunoId, questions: JSON.stringify(questions), totalOptions: 5 } })
   }
 
   return (
-    <View style={{ height: "100%", width: "100%", padding: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-      <View style={{ alignItems: "center", marginTop: 75 }}>
-        <Text style={{ marginBottom: 20, textAlign: "center", fontSize: 20 }}>Centralize as marcações, tente evitar que o celular esteja muito inclinado em relação a folha</Text>
-        <Camera
-          type={CameraType.back}
-          ref={cameraRef}
-          ratio={ratioString}
-          onCameraReady={() => {
-            handleRatio(cameraRef.current!)
-            cameraRef.current!.getSupportedRatiosAsync().then(console.log)
-          }}
-          style={{
-            height: 400,
-            width: 300
-          }}
-        />
+    <>
+      <View style={{ height: "100%", width: "100%", padding: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <View style={{ alignItems: "center", marginTop: 75 }}>
+          <Text style={{ marginBottom: 20, textAlign: "center", fontSize: 20 }}>Centralize as marcações, tente evitar que o celular esteja muito inclinado em relação a folha</Text>
+          {loading ? (
+            <View style={{ height: 400, width: 300, justifyContent: "center", alignItems: "center" }}>
+              <ActivityIndicator size="large" color="#0000ff" />
+            </View>
+          ) : (
+            <Camera
+              type={CameraType.back}
+              ref={cameraRef}
+              ratio={ratioString}
+              style={{
+                height: 400,
+                width: 300
+              }}
+            />
+          )}
+        </View>
+        <TouchableOpacity onPress={takePicture} style={{ padding: 16, backgroundColor: "#063CB4E5", borderRadius: 10, width: "100%", marginTop: 10, opacity: loading ? 50 : 100 }} disabled={loading}>
+          <Text style={{ fontWeight: "bold", color: "white", width: "100%" }}>{loading ? "Carregando..." : "Corrigir"}</Text>
+        </TouchableOpacity>
       </View>
-      <TouchableOpacity onPress={console.log} style={{ padding: 16, backgroundColor: "#063CB4E5", borderRadius: 10, width: "100%", marginTop: 10 }} disabled={loading}>
-        <Text style={{ fontWeight: "bold", color: "white", width: "100%" }}>{loading ? "Carregando..." : "Corrigir"}</Text>
-      </TouchableOpacity>
-    </View>
+    </>
   )
 }

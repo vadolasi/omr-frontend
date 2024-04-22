@@ -1,6 +1,7 @@
 import { Stack } from "expo-router"
 import Header from "../components/Header"
 import { StatusBar } from "react-native"
+import { RootSiblingParent } from "react-native-root-siblings"
 
 export const unstable_settings = {
   initialRouteName: "index"
@@ -8,7 +9,7 @@ export const unstable_settings = {
 
 export default function RootLayout() {
   return (
-    <>
+    <RootSiblingParent>
       <Stack screenOptions={{ contentStyle: { backgroundColor: "white" } }}>
         <Stack.Screen name="index" options={{ title: "Suas avaliações", header: ({ options: { title }, back }) => <Header title={title ?? ""} back={back !== undefined} /> }} />
         <Stack.Screen name="avaliacao/[avaliacaoId]/index" options={{ headerShown: false }} />
@@ -18,6 +19,6 @@ export default function RootLayout() {
         <Stack.Screen name="avaliacao/[avaliacaoId]/aluno/[alunoId]/scan" options={{ headerShown: false }} />
       </Stack>
       <StatusBar barStyle="dark-content" />
-    </>
+    </RootSiblingParent>
   )
 }

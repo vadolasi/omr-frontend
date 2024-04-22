@@ -1,8 +1,9 @@
 import { router, useLocalSearchParams } from "expo-router"
 import { useEffect, useState } from "react"
-import { View } from "react-native"
+import { View, FlatList } from "react-native"
 import { Button, Text } from "react-native-paper"
 import Header from "../../../../../components/Header"
+import Item from "../../../../../components/Item"
 
 export default function () {
   const { avaliacaoId, alunoId, questions, totalOptions } = useLocalSearchParams<{
@@ -31,55 +32,47 @@ export default function () {
       setParsedQuestions(_parsedQuestions)
       setResponded(true)
     }
-  }, [questions, totalCorrect])
+  }, [])
 
   return (
     <View>
-      <Header title={`Aluno #${alunoId}`} back />
-      <Button onPress={() => router.push({ pathname: "/avaliacao/[avaliacaoId]/aluno/[alunoId]/scan", params: { avaliacaoId, alunoId } })} className="mt-5">
-        {responded ? `Refazer avaliação` : "Iniciar avaliação"}
-      </Button>
-      <View className="px-10 mt-5">
-        {responded && Object.keys(parsedQuestions).map(questionId => (
-          <View key={questionId} className="flex flex-row items-center justify-between py-5">
-            <Text>
-              Questão {questionId}
-            </Text>
-            {Array.from({ length: parsedTotalOptions }, (_, i) => String.fromCharCode(65 + i)).map(option => (
-              <Button
-                key={option}
-                mode="outlined"
-                className="w-10 h-10"
-                compact
-                {...(parsedQuestions[questionId].correct === option ? {
-                  theme: { colors: { primary: "green" } },
-                  style: { borderColor: "green" }
-                } : {
-                  theme: { colors: { primary: "white" } }
-                })}
-                {...(parsedQuestions[questionId].response === option && parsedQuestions[questionId].response !== parsedQuestions[questionId].correct  ? {
-                  theme: { colors: { primary: "red" } },
-                  style: { borderColor: "red" }
-                } : {})}
-                onPress={() => {
-                  setParsedQuestions(questions => {
-                    const _questions = { ...questions }
-                    _questions[questionId].response = option
-                    return _questions
-                  })
-                }}
-              >
-                {option}
-              </Button>
-            ))}
-          </View>
-        ))}
+      <Header title={`Avaliação #${avaliacaoId}`} back />
+      <View style={{ paddingBottom: 10, paddingHorizontal: 20 }}>
+        <View style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+          <Text style={{ fontSize: 20 }}>Aluno #{alunoId}</Text>
+          {responded && (
+            <>
+              <View style={{ display: "flex" }}>
+                <Text style={{ fontSize: 20 }}>Acertos</Text>
+                <Text style={{ fontSize: 20, textAlign: "right" }}>{totalCorrect}</Text>
+              </View>
+              <View style={{ display: "flex" }}>
+                <Text style={{ fontSize: 20 }}>Percentual</Text>
+                <Text style={{ fontSize: 20, textAlign: "right" }}>{totalCorrect / Object.keys(parsedQuestions).length * 100}%</Text>
+              </View>
+            </>
+          )}
+        </View>
+        <Text style={{ fontSize: 30, fontWeight: "bold", marginTop: 15 }}>Questões</Text>
       </View>
-      {responded && (
-        <Button className="mt-5">
-          Salvar Resultado
-        </Button>
-      )}
+      <FlatList
+        scrollEnabled={responded}
+        style={{ height: "100%", marginHorizontal: 30 }}
+        data={Object.keys(parsedQuestions)}
+        renderItem={({ item: questionId }) => <Item questionId={questionId} parsedQuestions={parsedQuestions} parsedTotalOptions={parsedTotalOptions} setTotalCorrect={setTotalCorrect} />}
+        ListFooterComponent={(
+          <View style={{ marginBottom: 300, marginTop: 20 }}>
+            {responded && (
+              <Button buttonColor="#07B523E5" textColor="white" style={{ borderRadius: 10, padding: 5 }} onPress={() => router.push({ pathname: "/avaliacao/[avaliacaoId]/", params: { avaliacaoId } })}>
+                Finalizar correção
+              </Button>
+            )}
+            <Button buttonColor="#063CB4E5" textColor="white" style={{ borderRadius: 10, padding: 5, marginTop: 12 }} onPress={() => router.push({ pathname: "/avaliacao/[avaliacaoId]/aluno/[alunoId]/scan", params: { avaliacaoId, alunoId } })}>
+              {responded ? `Refazer avaliação` : "Iniciar avaliação"}
+            </Button>
+          </View>
+        )}
+      />
     </View>
   )
 }
