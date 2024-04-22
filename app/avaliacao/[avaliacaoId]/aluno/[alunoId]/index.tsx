@@ -32,7 +32,7 @@ export default function () {
       setParsedQuestions(_parsedQuestions)
       setResponded(true)
     }
-  }, [])
+  }, [questions])
 
   return (
     <View>

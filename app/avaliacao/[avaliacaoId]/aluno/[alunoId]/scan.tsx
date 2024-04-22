@@ -42,7 +42,7 @@ export default function () {
     let res: Response
 
     try {
-      res = await fetch("https://59c5-187-61-151-28.ngrok-free.app/", {
+      res = await fetch("https://omr.94-23-170-94.nip.io/", {
         method: "POST",
         headers: {
           "Content-Type": "multipart/form-data",
@@ -57,6 +57,7 @@ export default function () {
     }
 
     const data = await res.json()
+    console.log(data)
 
     if (!res.ok || data.status === "error") {
       Toast.show("Não foi possível processar a imagem. Tente novamente.")
