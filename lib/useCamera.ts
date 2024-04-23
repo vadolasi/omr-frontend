@@ -26,20 +26,6 @@ export default function useCamera() {
   const { width: screenWidth, height: screenHeight } = useWindowDimensions()
   const [width, setWidth] = useState(screenWidth)
 
-  const handleRatio = (camera: Camera) => {
-    camera.getSupportedRatiosAsync().then(ratios => {
-      const ratioString = prefferedRatios.find(ratio => ratios.includes(ratio)) ?? ratios[0]
-      const ratioStrings = ratioString.split(":")
-      const ratio = Number(ratioStrings[0]) / Number(ratioStrings[1])
 
-      setRatio(ratio)
-      setRatioString(ratioString)
-
-      if (width * ratio > screenHeight) {
-        setWidth(screenHeight / ratio)
-      }
-    })
-  }
-
-  return { permission, ratioString, width, handleRatio, height: width * ratio, fullScreenWidth: (screenHeight + 25) / ratio, fullScreenHeight: screenHeight + 25 }
+  return { permission, ratioString, width, height: width * ratio, fullScreenWidth: (screenHeight + 25) / ratio, fullScreenHeight: screenHeight + 25 }
 }

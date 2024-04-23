@@ -36,7 +36,7 @@ export default function App() {
     router.replace({ pathname: "/avaliacao/[avaliacaoId]/aluno/[alunoId]/", params: { avaliacaoId, alunoId } })
   }
 
-  const { permission, handleRatio, ratioString, fullScreenHeight, fullScreenWidth } = useCamera()
+  const { permission, ratioString, fullScreenHeight, fullScreenWidth } = useCamera()
 
   if (!permission) {
     return <Text>Requesting for camera permission</Text>
@@ -55,9 +55,6 @@ export default function App() {
           barCodeTypes: [BarCodeScanner.Constants.BarCodeType.qr]
         }}
         ratio={ratioString}
-        onCameraReady={() => {
-          handleRatio(cameraRef.current!)
-        }}
         style={{
           height: fullScreenHeight,
           width: fullScreenWidth

@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from "expo-router"
 import { ActivityIndicator, View, Text } from "react-native"
-import { Camera, CameraType } from "expo-camera"
+import { Camera, CameraCapturedPicture, CameraType } from "expo-camera"
 import useCamera from "../../../../../lib/useCamera"
 import { useRef, useState } from "react"
 import { TouchableOpacity } from "react-native-gesture-handler"
@@ -29,20 +29,18 @@ export default function () {
 
   const takePicture = async () => {
     setLoading(true)
-    const photo = await cameraRef.current!.takePictureAsync()
-    const filename = photo.uri.split("/").pop()!
 
-    const match = /\.(\w+)$/.exec(filename)
-    const type = match ? `image/${match[1]}` : `image`
+    cameraRef.current!.takePictureAsync({ quality: 1, onPictureSaved: (photo: CameraCapturedPicture) => {
+      const filename = photo.uri.split("/").pop()!
 
-    const formData = new FormData()
-    // @ts-ignore
-    formData.append("file", { uri: photo.uri, name: filename, type })
+      const match = /\.(\w+)$/.exec(filename)
+      const type = match ? `image/${match[1]}` : `image`
 
-    let res: Response
+      const formData = new FormData()
+      // @ts-ignore
+      formData.append("file", { uri: photo.uri, name: filename, type })
 
-    try {
-      res = await fetch("https://omr.94-23-170-94.nip.io/", {
+      fetch("https://omr.94-23-170-94.nip.io/", {
         method: "POST",
         headers: {
           "Content-Type": "multipart/form-data",
@@ -50,24 +48,26 @@ export default function () {
         },
         body: formData
       })
-    } catch (e) {
-      Toast.show("Ocorreu um erro. O incidente foi reportado. Verifique se a imagem está legível e tente novamente.")
-      setLoading(false)
-      return
-    }
+        .then(res => {
+          res.json()
+            .then(data => {
+              if (!res.ok || data.status === "error") {
+                Toast.show("Não foi possível processar a imagem. Tente novamente.")
+                setLoading(false)
+                return
+              }
 
-    const data = await res.json()
-    console.log(data)
+              const questions: Record<string, Question> = data
 
-    if (!res.ok || data.status === "error") {
-      Toast.show("Não foi possível processar a imagem. Tente novamente.")
-      setLoading(false)
-      return
-    }
-
-    const questions: Record<string, Question> = data
-
-    router.push({ pathname: "/avaliacao/[avaliacaoId]/aluno/[alunoId]/", params: { avaliacaoId, alunoId, questions: JSON.stringify(questions), totalOptions: 5 } })
+              router.push({ pathname: "/avaliacao/[avaliacaoId]/aluno/[alunoId]/", params: { avaliacaoId, alunoId, questions: JSON.stringify(questions), totalOptions: 5 } })
+            })
+        })
+        .catch(e => {
+          Toast.show("Ocorreu um erro. O incidente foi reportado. Verifique se a imagem está legível e tente novamente.")
+          setLoading(false)
+          return
+        })
+    }})
   }
 
   return (
@@ -75,21 +75,22 @@ export default function () {
       <View style={{ height: "100%", width: "100%", padding: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <View style={{ alignItems: "center", marginTop: 75 }}>
           <Text style={{ marginBottom: 20, textAlign: "center", fontSize: 20 }}>Centralize as marcações, tente evitar que o celular esteja muito inclinado em relação a folha</Text>
-          {loading ? (
+          {loading && (
             <View style={{ height: 400, width: 300, justifyContent: "center", alignItems: "center" }}>
               <ActivityIndicator size="large" color="#0000ff" />
             </View>
-          ) : (
-            <Camera
-              type={CameraType.back}
-              ref={cameraRef}
-              ratio={ratioString}
-              style={{
-                height: 400,
-                width: 300
-              }}
-            />
           )}
+          <Camera
+            type={CameraType.back}
+            ref={cameraRef}
+            ratio={ratioString}
+            useCamera2Api={true}
+            style={{
+              height: 400,
+              width: 300,
+              display: loading ? "none" : "flex"
+            }}
+          />
         </View>
         <TouchableOpacity onPress={takePicture} style={{ padding: 16, backgroundColor: "#063CB4E5", borderRadius: 10, width: "100%", marginTop: 10, opacity: loading ? 50 : 100 }} disabled={loading}>
           <Text style={{ fontWeight: "bold", color: "white", width: "100%" }}>{loading ? "Carregando..." : "Corrigir"}</Text>
